@@ -5,11 +5,20 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   interactive?: boolean
 }
 
+/**
+ * If the caller supplies their own `bg-*` utility we skip the default
+ * `bg-white` — Tailwind doesn't resolve conflicting utilities by className
+ * order, so without this guard the default would win in the cascade.
+ */
+const hasBgOverride = (cls?: string) =>
+  !!cls && /(^|\s)bg-(?!opacity)/.test(cls)
+
 export function Card({ className, interactive, children, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-white rounded-2xl border border-slate-100 shadow-card',
+        !hasBgOverride(className) && 'bg-white',
+        'rounded-2xl border border-slate-100 shadow-card',
         interactive && 'transition-shadow hover:shadow-elevated',
         className
       )}
