@@ -1,0 +1,9 @@
+---
+pid: 11796
+cwd: |
+  C:\Users\rx10
+---
+PS C:\Users\rx10> 
+ *  History restored 
+
+PS C:\Users\rx10> 

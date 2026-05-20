@@ -1,0 +1,488 @@
+================================================================================
+NEXUS INTRANET — PROMPTS & AI OUTPUT LOG
+================================================================================
+Project        : Nexus — Corporate Intranet (Web + Mobile + HR Admin)
+Stack          : React 19 + TypeScript + Vite + Tailwind + Recharts + Capacitor
+Assistant      : Cursor (Claude Sonnet 4.6 for scaffolding, Claude Opus 4.7 for refactor)
+Duration       : ~36 hrs
+Manual code %  : ~12% (env config, copy tweaks, README polish — see audit at bottom)
+
+This log is kept roughly chronological. AI responses are summarized and only the
+diffs/key lines are quoted, since the full responses run thousands of lines.
+
+================================================================================
+DAY 1
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+[09:14] Prompt #1 — Project framing
+────────────────────────────────────────────────────────────────────────────────
+> I have a 48-hour assessment to build a corporate intranet. Pasted the full
+> demand note. Read it carefully and propose a feature inventory before writing
+> any code. I want to make sure we don't miss any of the eight themes
+> (vision/leadership, news, footprints, calendar, people, recognition,
+> knowledge/forum, gamification/moderation).
+
+AI: Returned a markdown plan grouping features into:
+  1. Corporate narrative   (vision, leadership messages, monthly outcomes)
+  2. Business pulse        (announcements, project wins, milestones)
+  3. Org visibility        (footprints, multi-tenancy)
+  4. People & culture      (directory, recognition, leaderboard, new joinee)
+  5. Engagement            (calendar, gallery, forums)
+  6. Knowledge             (handbook/policies)
+  7. Governance            (moderation, publishing, analytics)
+  8. Shells                (employee-web, employee-mobile, hr-admin)
+
+Plus a proposed entity list: User, Vertical, Department, Announcement,
+LeadershipMessage, Footprint, EventItem, Recognition, ForumThread,
+KnowledgeDoc, MediaItem, ModerationItem, NewJoinee.
+
+I accepted this almost as-is. Only renamed "NewHire" → "NewJoinee" (matches the
+prompt language better).
+
+────────────────────────────────────────────────────────────────────────────────
+[09:42] Prompt #2 — Pick the framework
+────────────────────────────────────────────────────────────────────────────────
+> React or Vue or Angular for this? I'd prefer something with a strong typed
+> ecosystem and easy mobile wrapping (because the assessment also wants an APK).
+> Recommend a stack and justify briefly.
+
+AI: Recommended React + TS + Vite + Tailwind:
+  - Easiest Capacitor wrap for the APK requirement.
+  - Tailwind gives the "clutter-free aesthetics" without a heavy component lib.
+  - Recharts for the HR analytics charts.
+  - React Router 7 for the three-shell routing (web / mobile / admin).
+  - No backend — seed data + localStorage for demo persistence.
+
+Accepted.
+
+────────────────────────────────────────────────────────────────────────────────
+[10:05] Prompt #3 — Scaffold the project (this was the first attempt)
+────────────────────────────────────────────────────────────────────────────────
+> Bootstrap a Vite React-TS project in ./nexus-intranet and install Tailwind +
+> react-router-dom + lucide-react + recharts + date-fns. Run the dev server and
+> show me the package.json.
+
+AI tried to run `npm create vite@latest` via the MCP shell. First two attempts
+came back with **empty stdout** ("Command completed in 0 ms"). After a couple
+of retries the shell on Windows kept returning blanks.
+
+Workaround the AI suggested:
+> "Shell capture is failing on Windows. I'll write the scaffold files directly
+> via the Write tool — package.json, vite.config.ts, tsconfig.*, index.html,
+> postcss/tailwind configs."
+
+It then wrote those files verbatim. I ran `npm install` myself in PowerShell:
+   added 283 packages, audited 284 packages in 46s, 0 vulnerabilities
+   → confirmed back to the AI.
+
+────────────────────────────────────────────────────────────────────────────────
+[10:48] Prompt #4 — Types & seed data
+────────────────────────────────────────────────────────────────────────────────
+> Write src/types/index.ts with TypeScript interfaces for every entity. Use
+> string unions for roles, visibility pools, announcement type/status, event
+> type, recognition category/status, etc. Then write src/data/seed.ts with
+> realistic seeded data for all stages and states (so we hit "draft / published
+> / archived", "pending / approved / removed" etc. that the rubric mentions).
+
+AI: Produced both files. The seed gave us:
+  - 4 verticals, 8 departments, 16 users (Alex/Priya/Jordan/Morgan + 12 colleagues)
+  - 5 announcements covering all 4 types and all 3 statuses (incl. one DRAFT
+    so the admin queue isn't empty)
+  - 3 leadership posts (vision / meet-outcome / message)
+  - 3 footprints across verticals
+  - 5 events covering all 5 EventTypes
+  - 4 recognitions (1 flagged — for the moderation demo)
+  - 3 new joinees
+  - 3 forum threads (incl. one PINNED)
+  - 5 knowledge docs across all 4 categories
+  - 4 gallery items (3 images + 1 video)
+  - 3 moderation entries (1 pending recognition, 1 pending forum, 1 resolved)
+
+Manual nit I made later: changed `'Chris O\'Brien'` to `"Chris O'Brien"` so the
+backslash didn't visibly appear in editor previews. ~3 lines of manual edits.
+
+────────────────────────────────────────────────────────────────────────────────
+[11:30] Prompt #5 — Tenancy primitives
+────────────────────────────────────────────────────────────────────────────────
+> Write canView(visibility, user, opts) and filterByTenant(items, user) in
+> src/lib/utils.ts. Rules:
+>   - admin/hr see everything
+>   - 'organization' visible to all
+>   - 'vertical' only if user.verticalId === item.verticalId
+>   - 'department' only if user.departmentId === item.departmentId
+>   - 'leadership' only if user.visibilityPools.includes('leadership')
+> Add formatDate / timeAgo helpers using date-fns.
+
+AI: Delivered. (Note: first version of canView was lenient on `leadership` —
+returned `true` for everyone. I missed it. We fixed it during the Opus refactor
+on day 2.)
+
+────────────────────────────────────────────────────────────────────────────────
+[12:15] Prompt #6 — AppContext (auth + mutable state)
+────────────────────────────────────────────────────────────────────────────────
+> Build src/context/AppContext.tsx with login(email,password), logout,
+> currentUser (seeded from localStorage), mode ('web' | 'mobile' | 'admin'),
+> and mutators for recognitions (add / react / reply), announcements (publish),
+> moderation (approve/remove that hides flagged recognitions).
+
+AI: Produced AppContext using `useState` per slice + `useMemo`. It also added a
+re-export block at the bottom for convenience:
+
+    export {
+      users, events, footprints, leadershipMessages, knowledgeDocs,
+      mediaGallery, newJoinees, moderationQueue,
+    } from '@/data/seed'
+    export { departments, verticals, leaderboard } from '@/data/seed'
+
+→ This convenience export turned out to be the source of two later bugs. I let
+it pass at the time because the API looked clean.
+
+────────────────────────────────────────────────────────────────────────────────
+[13:10–17:40] Prompts #7–#13 — Pages, batched
+────────────────────────────────────────────────────────────────────────────────
+Rather than one page per prompt, I batched related pages so the AI could share
+patterns across them. Roughly:
+
+#7  Web layout + sidebar + mobile-overlay drawer + role-aware "HR Command" link.
+#8  Login screen with quick-login demo buttons for Employee/Mobile/HR/Admin.
+#9  Dashboard: vision hero, featured-news grid, joinee carousel, upcoming
+    events, leaderboard, recent recognition. Asked it to prioritize "not
+    overwhelming" — I wanted to see if it would self-limit widgets.
+    → It did. Stuck to ~6 widgets above the fold.
+#10 Announcements page with type filter pills + visibility badge.
+#11 Leadership page (vision/message/meet-outcome categories).
+#12 Footprints, People (with search + dept filter), Recognition (kudos form
+    + threaded replies + leaderboard sidebar + flagged-state styling).
+#13 Knowledge, Gallery, Forum.
+
+Asked the AI to lift repeated bits into <Button>, <Card>, <Badge>, <Avatar>,
+<Input>, <Textarea>, <StatCard>. It did so without being told twice.
+
+Asked specifically:
+> The recognition feed needs a moderation hook. Flagged recognitions must show
+> "Under review" badge but stay visible to the recipient. When HR removes one,
+> status should flip to 'hidden' and it disappears from the feed.
+
+AI implemented that with a `useCallback` in `moderateItem` that also patches
+the recognitions slice. (This had a small stale-closure issue that I caught on
+day 2 — see Refactor section.)
+
+────────────────────────────────────────────────────────────────────────────────
+[18:30] Prompt #14 — Mobile shell + admin shell
+────────────────────────────────────────────────────────────────────────────────
+> Add the /mobile shell (max-width 430px, glass nav with 5 bottom tabs) and the
+> /admin shell (dark sidebar, "Command Center" branding). Both should reuse the
+> same data layer.
+
+AI: Produced MobileLayout + 5 mobile routes, AdminLayout + 4 admin routes.
+The admin pages reuse the same useApp() context.
+
+I asked it to add charts on the admin dashboard:
+> Use recharts. Two charts above the fold (weekly engagement bar, headcount-by-
+> vertical pie) and a content pipeline summary card below.
+
+AI delivered. Asked for a separate Analytics page too — engagement-index vs
+recognition-volume line chart. Done.
+
+────────────────────────────────────────────────────────────────────────────────
+[20:55] Prompt #15 — README + log file
+────────────────────────────────────────────────────────────────────────────────
+> Write README.md (setup, demo credentials, deploy, mobile APK note) and start
+> PROMPTS_AND_AI_LOG.txt. I want both for the submission package.
+
+AI: Wrote both. The README's APK section was vague ("wrap with Capacitor") —
+I left it for later because the web build wasn't even compiling cleanly yet.
+
+End of Day 1. Pushed to GitHub. Verified `npm run dev` started without errors
+in the terminal, did NOT yet open the browser to test. Mistake — I should have.
+
+================================================================================
+DAY 2
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+[08:01] First real run in the browser → things broke
+────────────────────────────────────────────────────────────────────────────────
+Ran `npm run dev` and opened http://localhost:5173.
+
+Got an esbuild error in the Vite overlay:
+
+    X [ERROR] No matching export in "src/context/AppContext.tsx"
+              for import "forumThreads"
+        src/pages/admin/AdminDashboard.tsx:7:16:
+          7 │ import { users, forumThreads } from '@/context/AppContext'
+            ╵                 ~~~~~~~~~~~~
+
+Then a follow-up babel error:
+
+    Identifier 'useApp' has already been declared. (6:9)
+        5 | import { useApp } from '@/context/AppContext'
+      > 6 | import { useApp } from '@/context/AppContext'
+
+Two different bugs in one file. Pasted the entire error trace into Cursor.
+
+> Two errors. (1) AdminDashboard imports `forumThreads` from AppContext but
+> forumThreads is on the runtime context value (useApp()), not a static export.
+> (2) Same file has two `import { useApp }` lines — must be an earlier
+> half-applied edit. Fix both. Then grep for similar broken imports in the
+> whole src/ so we don't whack-a-mole this again.
+
+AI:
+  - Collapsed the two `useApp` imports into one.
+  - Pulled `forumThreads` out of useApp() destructure instead of importing it.
+  - Ran a grep across `src/` and found one more leftover: Footprints.tsx
+    importing `users` from AppContext that it didn't actually use. Removed.
+
+dev server compiled clean. Login → Dashboard → all routes navigated.
+
+I noted this as the **root cause**: re-exporting seed data through AppContext
+was a footgun. Mental note for the refactor pass.
+
+────────────────────────────────────────────────────────────────────────────────
+[09:20] APK setup
+────────────────────────────────────────────────────────────────────────────────
+> Now wire up Capacitor for the Android APK. We need:
+>   - capacitor.config.ts (appId com.nexus.intranet, webDir dist)
+>   - npm scripts: cap:sync, cap:open, cap:run
+>   - Vite must build with `base: './'` so the WebView can resolve assets
+>     when loaded from a file:// or capacitor:// scheme
+>   - README section with step-by-step (prereqs, one-time setup, debug + release
+>     APK paths, common gotchas)
+
+AI: Added @capacitor/cli, @capacitor/core, @capacitor/android to package.json,
+created `capacitor.config.ts`, updated vite.config to set `base: './'`, and
+expanded the README's APK section with a troubleshooting table:
+
+   | Issue                 | Fix                                              |
+   | Blank white screen    | npm run build then cap:sync again                |
+   | Routes 404 on refresh | androidScheme: 'https' in capacitor.config.ts    |
+   | Gradle / SDK errors   | Install Android 14 (API 34) in SDK Manager       |
+   | `cap` not found       | Use npx cap                                      |
+
+I didn't actually run `npx cap add android` yet — saved that for the actual
+build day. Just wanted the project ready.
+
+────────────────────────────────────────────────────────────────────────────────
+[10:15] Reset: I'm not happy with the codebase. Asking for a refactor.
+────────────────────────────────────────────────────────────────────────────────
+After clicking through the running app for ~30 minutes, I had a list of code
+smells:
+
+  1. AppContext mixes mutable state + static seed re-exports (caused the bug).
+  2. canView too lenient on 'leadership' (every employee can see leadership-only
+     announcements — that's wrong).
+  3. Module-level `leaderboard` is static; sending kudos doesn't move ranks.
+  4. Each page has its own `if (!currentUser) return null` boilerplate.
+  5. Every page has its own `<select>` markup with the same Tailwind classes.
+  6. Badge uses loose Record<string,string> for colors — no autocomplete.
+  7. State doesn't persist across refreshes, so demoing the moderation flow
+     resets the queue every time.
+  8. The /admin route accepts non-HR users — they get a "no access" message
+     instead of being redirected.
+  9. Page headers are duplicated inline 10+ times.
+ 10. `nav` arrays defined inline in three different layout files.
+
+> Refactor the entire codebase with Claude Opus 4.7. Goals:
+>   - Split selectors out of AppContext (canView, filterByTenant, leaderboard).
+>   - Use a typed BadgeTone instead of color: Record<string,string>.
+>   - Add useLocalStorage and useCurrentUser hooks.
+>   - Persist recognitions/announcements/moderation in localStorage.
+>   - Compute leaderboard dynamically from recognitions (bonus per kudos +
+>     reaction).
+>   - Tighten canView: 'leadership' must check visibilityPools.
+>   - Role-aware ProtectedRoute (roles=['hr','admin']).
+>   - Extract <PageHeader>, <FilterPills>, <Select>, <IconBadge> primitives.
+>   - Move nav arrays into src/config/nav.ts.
+> Don't break the existing routes or seed data. Keep all features.
+
+This turned into the biggest single AI response of the assessment — Opus
+rewrote ~25 files in one pass. I'll skip pasting the full output and just
+record what landed:
+
+  New files:
+    src/hooks/useLocalStorage.ts
+    src/hooks/useCurrentUser.ts        (throws if called outside ProtectedRoute)
+    src/lib/selectors.ts               (canView, filterByTenant,
+                                        visibleColleagues, visibleAnnouncements,
+                                        computeLeaderboard)
+    src/components/ui/Select.tsx
+    src/components/shared/PageHeader.tsx
+    src/components/shared/FilterPills.tsx
+    src/components/shared/IconBadge.tsx
+    src/config/nav.ts
+
+  Rewritten:
+    AppContext (no more seed re-exports; per-slice useLocalStorage; resetDemo).
+    Badge (BadgeTone union, kept `color` as deprecated alias for compat).
+    Button (added `subtle` variant, focus-visible rings, default type="button").
+    All 10 web pages, 5 mobile pages, 4 admin pages.
+    All 3 layouts (consume webNav/adminNav/mobileNav from config/nav.ts).
+
+  Behavior changes I asked for and verified:
+    - Sending kudos in /app/recognition now actually moves the user up the
+      leaderboard immediately (kudos bonus +25, reaction bonus +2).
+    - Logging in as alex.rivera and trying /admin redirects to /app.
+    - Refreshing keeps your recognitions/published announcements.
+    - Draft announcement 'ann-5' (leadership-only) is no longer visible to
+      regular employees in the announcements feed — only HR/admin/CEO.
+
+────────────────────────────────────────────────────────────────────────────────
+[12:40] Two small follow-ups after the refactor
+────────────────────────────────────────────────────────────────────────────────
+> The kudos category was hardcoded to 'peer'. The Recognition type already
+> has peer/achievement/milestone/welcome. Expose it in the form.
+
+AI: Added a category <Select> next to the recipient picker, plus a
+CATEGORY_TONES map for the badge color.
+
+> ContentPublish always saves as 'draft'. I'd expect Publish to actually
+> publish (status='published') and a separate "Save as draft" button.
+
+AI: Split into two buttons, added a `featured` checkbox, added a Type select.
+Now you can demo creating an announcement that appears on the dashboard
+immediately.
+
+────────────────────────────────────────────────────────────────────────────────
+[15:20] APK build — first attempt
+────────────────────────────────────────────────────────────────────────────────
+Ran (locally, not via AI):
+    npm install            # picks up @capacitor/*
+    npm run build          # vite production build, base './'
+    npx cap add android    # creates ./android with Gradle project
+    npm run cap:sync       # copies dist/ into android/app/src/main/assets
+    npm run cap:open       # opens Android Studio
+
+In Android Studio: Build → Build APK(s) → succeeded.
+Installed `app-debug.apk` on a Pixel 6 emulator. App loaded, login screen
+showed, signed in as alex.rivera, mobile shell rendered.
+
+One issue: tab bar overlapped by the system gesture bar. Asked:
+
+> The mobile bottom-tab nav is partially covered by the gesture bar on Android.
+> Add safe-area padding.
+
+AI: Updated index.css `.mobile-safe` to use `env(safe-area-inset-bottom)` (it
+already had this) AND increased `pb-24` on `<main>` so the last list item isn't
+hidden by the nav. Confirmed fix in the emulator.
+
+================================================================================
+DAY 3 — final polish
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+[09:00] Browser smoke test of every route
+────────────────────────────────────────────────────────────────────────────────
+I clicked through every route as each persona:
+
+  alex.rivera (employee)
+    /app                  ✓
+    /app/leadership       ✓ — vision/message/meet-outcome rendered
+    /app/announcements    ✓ — only 3 visible (org + tech-vertical), filter pills
+                              work, draft NOT visible. Pass.
+    /app/footprints       ✓ — 2 visible (org + tech-vertical). Pass.
+    /app/calendar         ✓ — May 2026 grid, today highlighted, "+N more"
+                              overflow works on May 22 with 1 event.
+    /app/people           ✓ — search "Sam" filters to one card.
+    /app/recognition      ✓ — sent a kudos to Ravi, leaderboard moved.
+    /app/knowledge        ✓
+    /app/gallery          ✓
+    /app/forum            ✓ — pinned thread on top.
+
+  priya.sharma (HR)
+    /admin                ✓ — pie chart shows real headcounts; bar chart legend.
+    /admin/moderation     ✓ — 2 pending, approve/remove work, on remove the
+                              flagged kudos disappears from the feed in /app.
+    /admin/content        ✓ — published a "Test Townhall" announcement,
+                              checked it appears on alex's dashboard.
+    /admin/analytics      ✓
+
+  jordan.lee (Admin)
+    Same as HR — all visible.
+
+────────────────────────────────────────────────────────────────────────────────
+[10:40] A few visual nits
+────────────────────────────────────────────────────────────────────────────────
+> Two small things:
+>   - The dashboard StatCard truncates "Pending moderation" awkwardly when
+>     value=0 and no sub-text.
+>   - On <360px screens the mobile header user name overflows.
+
+AI: Added a `truncate` to StatCard's value <p>. For the mobile header it
+shortened "Hi, Alex Rivera" to first-name-only display (which it already did,
+but added `min-w-0` on the flex container).
+
+────────────────────────────────────────────────────────────────────────────────
+[12:00] Final README + this log
+────────────────────────────────────────────────────────────────────────────────
+> Update README with the final feature checklist, prerequisites, deploy steps
+> (Vercel / Netlify drag-drop), APK steps, and the demo creds table. Then
+> rewrite this log to actually reflect what we did across the two days,
+> including the bugs and refactors — not just the happy path.
+
+(You're reading the result.)
+
+────────────────────────────────────────────────────────────────────────────────
+[14:30] Release APK + deploy
+────────────────────────────────────────────────────────────────────────────────
+Android Studio → Build → Generate Signed Bundle/APK → APK → release.
+Created a debug keystore for the assessment (NOT a production key).
+Output: android/app/build/outputs/apk/release/app-release.apk (8.2 MB).
+
+Web deploy: `npm run build` → drag-dropped `dist/` to Vercel. Took 18s.
+URL added to README and submission email.
+
+================================================================================
+DEMO CREDENTIALS (also in README)
+================================================================================
+Employee  : alex.rivera@nexuscorp.com    / employee123   → /app  or  /mobile
+HR        : priya.sharma@nexuscorp.com   / hr123         → /admin
+Admin     : jordan.lee@nexuscorp.com     / admin123      → /admin
+CEO (emp) : morgan.chen@nexuscorp.com    / leadership123 → /app  (sees
+                                                            leadership-only
+                                                            content)
+
+================================================================================
+MANUAL-INTERVENTION AUDIT (target: <20%)
+================================================================================
+Categories of manual edits I made on top of AI output:
+
+  1. Copy/string tweaks                                       ~2%
+       - Renamed "NewHire" → "NewJoinee"
+       - Reworded a few subtitle strings
+       - Fixed `'Chris O\'Brien'` → `"Chris O'Brien"`
+  2. Credentials and demo accounts                            ~1%
+       - Picked the email pattern @nexuscorp.com
+       - Picked the four demo passwords
+  3. Environment / config                                     ~3%
+       - Set ANDROID_HOME and JDK path in PowerShell
+       - Created the debug keystore for the release APK
+       - Added .vercel.json (none, plain dist deploy)
+  4. Manual file-system + Git                                 ~2%
+       - Ran `npm install`, `npm run dev`, `npm run build`
+       - `git init`, commits, remote push
+       - `npx cap add android`, opened Android Studio
+  5. Verification / clicking through                          ~4%
+       - The Day 3 smoke test above
+       - Pasted real error logs back into Cursor for fixes
+
+Total manual code I actually typed by hand: < 60 lines (mostly copy edits and
+the .gitignore extras for `android/` and `ios/`). Everything structural —
+schemas, hooks, selectors, layouts, pages, charts, the refactor — was generated
+or rewritten by the assistant, with me prompting and verifying.
+
+================================================================================
+LESSONS / WHAT I'D DO DIFFERENTLY
+================================================================================
+- Run the app in the browser at the end of Day 1, not just `npm run dev`.
+  The two import bugs would have surfaced 12 hours earlier.
+- Don't let `AppContext` re-export static seed data. It always ends in tears.
+- Ask for a "review pass" prompt EARLIER — by Day 2 morning. The refactor I
+  asked Opus to do at 10:15 on Day 2 should probably have happened the night
+  before, while the codebase was smaller.
+- Capacitor + Windows: set ANDROID_HOME once at the OS level, not in the
+  current shell. Saved me re-doing it after a reboot.
+
+================================================================================
+END OF LOG
+================================================================================
