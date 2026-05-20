@@ -82,7 +82,7 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 p-4 safe-top safe-bottom">
       <div className="w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-500 text-white mb-4 shadow-elevated">

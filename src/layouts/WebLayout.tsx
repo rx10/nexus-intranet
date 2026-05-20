@@ -22,7 +22,7 @@ export function WebLayout() {
       <aside
         className={cn(
           'fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-100',
-          'flex flex-col transition-transform lg:translate-x-0',
+          'flex flex-col transition-transform lg:translate-x-0 safe-top safe-bottom',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -104,16 +104,18 @@ export function WebLayout() {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="lg:hidden sticky top-0 z-20 glass border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setOpen(true)}
-            className="p-2 rounded-lg hover:bg-slate-100"
-            aria-label="Open navigation"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <span className="font-display font-semibold">Nexus</span>
-          <Avatar src={currentUser.avatar} name={currentUser.name} size="sm" />
+        <header className="lg:hidden sticky top-0 z-20 glass safe-top border-b border-slate-100">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => setOpen(true)}
+              className="p-2 rounded-lg hover:bg-slate-100"
+              aria-label="Open navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <span className="font-display font-semibold">Nexus</span>
+            <Avatar src={currentUser.avatar} name={currentUser.name} size="sm" />
+          </div>
         </header>
         <main className="flex-1 overflow-auto">
           <Outlet />

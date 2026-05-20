@@ -20,8 +20,20 @@
   .page-container {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6;
   }
-  .mobile-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0);
+  /* Pads the top edge of sticky/fixed headers so they clear the Android /
+     iOS status bar when the WebView draws under it (Capacitor default). */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  /* Pads the bottom edge above gesture nav / home indicator. */
+  .mobile-safe,
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Reserves a top spacer the height of the status bar — useful as the
+     first row of a full-bleed screen (e.g. Login) so logos don't overlap. */
+  .safe-top-spacer {
+    height: env(safe-area-inset-top, 0px);
   }
 }
 

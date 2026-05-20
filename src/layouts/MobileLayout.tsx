@@ -12,33 +12,39 @@ export function MobileLayout() {
 
   return (
     <div className="mobile-shell flex flex-col min-h-dvh">
-      <header className="sticky top-0 z-20 glass px-4 py-3 flex items-center justify-between border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <Avatar src={currentUser.avatar} name={currentUser.name} size="sm" />
-          <div>
-            <p className="text-sm font-semibold leading-tight">Hi, {currentUser.name.split(' ')[0]}</p>
-            <p className="text-xs text-brand-600 font-medium">{currentUser.points} pts</p>
+      <header className="sticky top-0 z-20 glass safe-top border-b border-slate-100">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar src={currentUser.avatar} name={currentUser.name} size="sm" />
+            <div>
+              <p className="text-sm font-semibold leading-tight">
+                Hi, {currentUser.name.split(' ')[0]}
+              </p>
+              <p className="text-xs text-brand-600 font-medium">
+                {currentUser.points} pts
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-1">
-          <button
-            onClick={() => navigate('/app')}
-            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"
-            title="Web console"
-            aria-label="Web console"
-          >
-            <Monitor className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => {
-              logout()
-              navigate('/')
-            }}
-            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"
-            aria-label="Sign out"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex gap-1">
+            <button
+              onClick={() => navigate('/app')}
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"
+              title="Web console"
+              aria-label="Web console"
+            >
+              <Monitor className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                logout()
+                navigate('/')
+              }}
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 

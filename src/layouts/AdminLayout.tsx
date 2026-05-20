@@ -21,7 +21,7 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-slate-100">
-      <aside className="w-60 bg-slate-900 text-white flex flex-col">
+      <aside className="w-60 bg-slate-900 text-white flex flex-col safe-top safe-bottom">
         <div className="p-5">
           <Badge tone="brand" className="mb-2 bg-brand-500/20 text-brand-200">
             Command Center
