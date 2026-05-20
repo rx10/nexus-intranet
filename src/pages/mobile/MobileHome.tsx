@@ -20,11 +20,15 @@ export function MobileHome() {
 
   return (
     <div className="p-4 space-y-4 animate-fade-in">
-      <Card className="bg-brand-600 text-white border-0">
+      <Card className="bg-gradient-to-br from-brand-600 to-brand-800 text-white border-0 overflow-hidden">
         <CardContent className="pt-4">
-          <p className="text-xs text-brand-200 uppercase tracking-wide">Today on Nexus</p>
-          <p className="font-display font-bold text-lg mt-1 line-clamp-2">{vision?.title}</p>
-          <p className="text-sm text-brand-100 mt-1 line-clamp-2">{vision?.excerpt}</p>
+          <p className="text-xs text-white/70 uppercase tracking-wide font-medium">
+            Today on Nexus
+          </p>
+          <p className="font-display font-bold text-lg mt-1 line-clamp-2 text-white">
+            {vision?.title}
+          </p>
+          <p className="text-sm text-white/85 mt-1 line-clamp-2">{vision?.excerpt}</p>
         </CardContent>
       </Card>
 
