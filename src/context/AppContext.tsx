@@ -15,6 +15,7 @@ import {
 } from '@/data/seed'
 import type {
   Announcement,
+  ForumReply,
   ForumThread,
   ModerationItem,
   ModerationStatus,
@@ -35,6 +36,13 @@ interface NewRecognitionPayload {
   category: RecognitionCategory
 }
 
+interface NewForumThreadPayload {
+  title: string
+  body: string
+  category: string
+  tags: string[]
+}
+
 interface AppContextValue {
   // Session
   currentUser: User | null
@@ -53,6 +61,9 @@ interface AppContextValue {
   addReply: (recognitionId: string, text: string) => void
   publishAnnouncement: (ann: Announcement) => void
   moderateItem: (id: string, status: Extract<ModerationStatus, 'approved' | 'removed'>) => void
+  createForumThread: (payload: NewForumThreadPayload) => ForumThread | null
+  addForumReply: (threadId: string, text: string) => void
+  incrementForumView: (threadId: string) => void
   resetDemo: () => void
 }
 
@@ -70,7 +81,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [announcements, setAnnouncements] = useLocalStorage<Announcement[]>(KEY_ANN, seedAnnouncements)
   const [recognitions, setRecognitions] = useLocalStorage<Recognition[]>(KEY_REC, seedRecognitions)
-  const [forumThreads] = useLocalStorage<ForumThread[]>(KEY_FORUM, seedForumThreads)
+  const [forumThreads, setForumThreads] = useLocalStorage<ForumThread[]>(KEY_FORUM, seedForumThreads)
   const [moderationQueue, setModerationQueue] = useLocalStorage<ModerationItem[]>(KEY_MOD, seedModerationQueue)
 
   const currentUser = useMemo<User | null>(
@@ -169,11 +180,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setModerationQueue, setRecognitions]
   )
 
+  const createForumThread = useCallback(
+    (payload: NewForumThreadPayload): ForumThread | null => {
+      if (!currentUser) return null
+      const next: ForumThread = {
+        id: `ft-${Date.now()}`,
+        title: payload.title.trim(),
+        body: payload.body.trim(),
+        category: payload.category.trim() || 'General',
+        tags: payload.tags,
+        authorId: currentUser.id,
+        createdAt: new Date().toISOString(),
+        repliesList: [],
+        views: 0,
+        pinned: false,
+      }
+      setForumThreads((prev) => [next, ...prev])
+      return next
+    },
+    [currentUser, setForumThreads]
+  )
+
+  const addForumReply = useCallback(
+    (threadId: string, text: string) => {
+      if (!currentUser) return
+      const reply: ForumReply = {
+        id: `freply-${Date.now()}`,
+        userId: currentUser.id,
+        text: text.trim(),
+        createdAt: new Date().toISOString(),
+      }
+      setForumThreads((prev) =>
+        prev.map((t) =>
+          t.id === threadId ? { ...t, repliesList: [...t.repliesList, reply] } : t
+        )
+      )
+    },
+    [currentUser, setForumThreads]
+  )
+
+  const incrementForumView = useCallback(
+    (threadId: string) => {
+      setForumThreads((prev) =>
+        prev.map((t) => (t.id === threadId ? { ...t, views: t.views + 1 } : t))
+      )
+    },
+    [setForumThreads]
+  )
+
   const resetDemo = useCallback(() => {
     setAnnouncements(seedAnnouncements)
     setRecognitions(seedRecognitions)
+    setForumThreads(seedForumThreads)
     setModerationQueue(seedModerationQueue)
-  }, [setAnnouncements, setRecognitions, setModerationQueue])
+  }, [setAnnouncements, setRecognitions, setForumThreads, setModerationQueue])
 
   const value = useMemo<AppContextValue>(
     () => ({
@@ -191,6 +251,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addReply,
       publishAnnouncement,
       moderateItem,
+      createForumThread,
+      addForumReply,
+      incrementForumView,
       resetDemo,
     }),
     [
@@ -207,6 +270,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addReply,
       publishAnnouncement,
       moderateItem,
+      createForumThread,
+      addForumReply,
+      incrementForumView,
       resetDemo,
     ]
   )

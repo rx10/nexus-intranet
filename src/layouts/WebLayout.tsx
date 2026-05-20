@@ -4,6 +4,7 @@ import { LogOut, Menu, Smartphone, Shield, Building2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { findDepartment } from '@/data/seed'
 import { Avatar } from '@/components/ui/Avatar'
+import { PersonaSwitcher } from '@/components/shared/PersonaSwitcher'
 import { cn } from '@/lib/utils'
 import { webNav } from '@/config/nav'
 
@@ -118,6 +119,7 @@ export function WebLayout() {
           <Outlet />
         </main>
       </div>
+      <PersonaSwitcher />
     </div>
   )
 }

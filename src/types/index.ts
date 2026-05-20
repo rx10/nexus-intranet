@@ -118,6 +118,13 @@ export interface Recognition {
   status: RecognitionStatus
 }
 
+export interface ForumReply {
+  id: string
+  userId: string
+  text: string
+  createdAt: string
+}
+
 export interface ForumThread {
   id: string
   title: string
@@ -125,7 +132,8 @@ export interface ForumThread {
   authorId: string
   category: string
   createdAt: string
-  replies: number
+  /** Persisted reply list — the legacy `replies` count is derived from this. */
+  repliesList: ForumReply[]
   views: number
   pinned: boolean
   tags: string[]

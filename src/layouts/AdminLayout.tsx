@@ -3,6 +3,7 @@ import { LogOut, ArrowLeft } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { PersonaSwitcher } from '@/components/shared/PersonaSwitcher'
 import { adminNav } from '@/config/nav'
 import { cn } from '@/lib/utils'
 
@@ -77,6 +78,7 @@ export function AdminLayout() {
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
+      <PersonaSwitcher />
     </div>
   )
 }
