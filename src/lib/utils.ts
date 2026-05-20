@@ -35,7 +35,3 @@ export function greeting(date = new Date()) {
   if (h < 17) return 'Good afternoon'
   return 'Good evening'
 }
-
-// Re-export tenancy helpers from the canonical location so existing
-// `@/lib/utils` imports continue to resolve.
-export { canView, filterByTenant } from '@/lib/selectors'
