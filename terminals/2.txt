@@ -1,6 +1,0 @@
----
-pid: 8976
-cwd: |
-  C:\Users\rx10
----
-PS C:\Users\rx10>

@@ -9,3 +9,5 @@ dist-ssr
 .env
 .env.*
 !.env.example
+terminals/1.txt
+terminals/2.txt
