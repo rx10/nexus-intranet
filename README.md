@@ -2,6 +2,9 @@
 
 A **dynamic, interactive corporate intranet** built for a development assessment: employee web experience, mobile employee shell (APK-ready via Capacitor), and HR/Admin command center. Static seeded data with client-side state — no backend required.
 
+🌐 **Live demo:** <https://nexus-intranet.netlify.app>
+👤 **Demo credentials:** see [the table below](#demo-credentials) or use the in-app **"Switch persona"** floating button.
+
 ## Stack
 
 - **React 19** + **TypeScript** + **Vite**
@@ -37,12 +40,13 @@ npm run preview
 - **Leadership** — vision, messages, monthly meet outcomes
 - **News & Wins** — announcements with multi-tenancy visibility (org / vertical / department)
 - **Impact Footprints** — department metrics and quarterly impact
-- **Engagement Calendar** — visual month grid + event list
+- **Engagement Calendar** — visual month grid, clickable event chips → detail drawer with RSVP
 - **People Directory** — discover colleagues with pool-based visibility
 - **Recognition** — peer kudos, replies, reactions, gamification leaderboard
-- **Knowledge Hub** — handbooks, policies, references
+- **Knowledge Hub** — handbooks, policies, references with search, category filter, preview modal
 - **Gallery** — event photos/videos
-- **Forum** — pinned threads, categories, tags
+- **Forum** — start threads, reply, view counter, pinned threads, categories, tags
+- **Persona switcher** — floating bottom-right pill to flip between Employee / HR / CEO and watch the tenancy filter change live
 
 ### Mobile employee (`/mobile`)
 - Home, Feed, Kudos, Events, People (limited subset for field use)
@@ -145,8 +149,8 @@ The app loads the same React build as the website. After login, use **Employee M
 
 - [x] Git repo (initialize locally / push to remote)
 - [x] `PROMPTS_AND_AI_LOG.txt` — scaffold + correction prompts
-- [ ] Hosted public URL (deploy `dist`)
-- [ ] Video walkthrough with narration
+- [x] Hosted public URL — <https://nexus-intranet.netlify.app>
+- [x] Video walkthrough — see `walkthrough.mp4` in the submission package (script in [`docs/VIDEO_WALKTHROUGH.md`](docs/VIDEO_WALKTHROUGH.md))
 
 ## License
 
